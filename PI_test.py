@@ -113,7 +113,7 @@ def sim7600_sending_task():
 
     while (sim7600_moudule):
         try:
-            time.sleep(Conf.sim7600_send_interval * 0.7) #600 seconds/ but in seperate part / to shift away form upload
+            time.sleep(Conf.sim7600_send_interval * 0.4) #600 seconds/ but in seperate part / to shift away form upload
             stop_query_sensor = 1  #halt getting sensor data for a while
 
             pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
@@ -193,44 +193,44 @@ def sim7600_sending_task():
             at_cmd = "AT+CGREG?\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("-------CGREG---------")
+            print("-------CGREG---------")
 
             at_cmd = "AT+CGPADDR\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("-------CGPADDR---------")
+            print("-------CGPADDR---------")
 
             at_cmd = "AT+HTTPINIT\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("-------HTTP init-------")
+            print("-------HTTP init-------")
 
             print("set HTTP parameter\n")
             pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
             http_get_command_msg = "AT+HTTPPARA=\"URL\",\"https://data.lass-net.org/Upload/MAPS-secure.php?topic=MAPS6&device_id=LTE_TEST_001&key=NoKey&msg=|s_t0=25.91|app=MAPS6|date=" + pairs[0] + "|s_d2=26|s_d0=41|s_d1=48|s_h0=55|device_id=LTE_TEST_001|s_g8=885|s_gg=567|ver_app=5.2b.1|time=" + pairs[1] + "\"\r"
-            ser.write(http_get_command_msg.encode())
+            mcu.PROTOCOL_UART_TXRX_EX(0,http_get_command_msg.encode(),250,3000)
             time.sleep(1)
----------------------------------------------------------------------------------------
+
             at_cmd = "AT+HTTPACTION=0\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("------send HTTP GET----------")
+            print("------send HTTP GET----------")
 
             at_cmd = "AT+HTTPHEAD\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("----HTTP HEAD-----")
+            print("----HTTP HEAD-----")
 
 
             at_cmd = "AT+HTTPREAD=0,500\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("----HTTP read respond----")
+            print("----HTTP read respond----")
 
             at_cmd = "AT+HTTPTERM\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("-------end HTTP---------")
+            print("-------end HTTP---------")
 
             # #connect pack
             # at_cmd = Conf.connect_pack.upper()
@@ -263,7 +263,7 @@ def sim7600_sending_task():
 
             stop_query_sensor = 0  #resume getting sensor data
             sim7600_fail_flag = 0  #sim7600 is good
-            time.sleep(Conf.sim7600_send_interval * 0.3) #the rest of time interval
+            time.sleep(Conf.sim7600_send_interval * 0.6) #the rest of time interval
 
         except:
             print("=====sim7600 Fail====")
