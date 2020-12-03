@@ -16,11 +16,11 @@ PATH_OF_CONFIG = str(os.path.basename(__file__)[:-3] + "_config")
 Conf = __import__(PATH_OF_CONFIG)
 
 #temperary value
-do_condition        = 1
+do_condition          = 1
 sim7600_moudule       = 1
-loop                = 0
-stop_query_sensor   = 0
-initialize_flag     = 0
+loop                  = 0
+stop_query_sensor     = 0
+initialize_flag       = 0
 sim7600_fail_flag     = 0
 
 #preset
@@ -107,9 +107,8 @@ def sim7600_sending_task():
         time.sleep(5)
 
     print("sim7600_sending_task start!!!")
-    #print(Conf.prifix)
     mcu.PROTOCOL_UART_BEGIN(0,4) #use port:0 / set to '4' as 115200 baud
-    #mcu.PROTOCOL_UART_BEGIN(0,0)
+
 
     while (sim7600_moudule):
         try:
@@ -130,42 +129,6 @@ def sim7600_sending_task():
 
             print("------------------------")
             print("msg_for_sim7600:",msg)
-            # msg = Conf.prifix + msg
-            # payload_len = len(msg) #remember to add tpoic length (2 byte in this case)
-            # payload_len = payload_len + 2
-
-            #MQTT Remaining Length calculate
-            #currently support range 0~16383(1~2 byte)
-            # if(payload_len<128):
-            #     payload_len_hex = hex(payload_len).split('x')[-1]
-            # else:
-            #     a = payload_len % 128
-            #     b = payload_len // 128
-            #     a = hex(a+128).split('x')[-1]
-            #     b = hex(b).split('x')[-1]
-            #     b = b.zfill(2)
-            #     payload_len_hex = str(a) + " " + str(b)
-
-            # msg_hex = formatStrToInt(msg)
-
-            # add_on = PUB_CMD / Remaim Length / topic length (MAPS/MAPS6/xxxxxxxxxxxx > 0x17)
-            # add_on = "30 " + str(payload_len_hex.upper()) +" 00 17 "
-            # end_line = "1A"
-            # message_package = add_on + msg_hex + end_line
-            # message_package = message_package.upper()
-
-            # print("=============================================")
-            # print("connect_pack:")
-            # print(Conf.connect_pack.upper())
-            # print("----------------")
-            # print("message_package:")
-            # print(message_package)
-            #seperate message to little part / because buffer issue
-            # n = 141  #just because a line is about 141 char long
-            # for i in range(0,len(message_package),n):
-            #     message_package_part.append(message_package[i:i+n])
-            #print("this is part:")
-            #print(message_package_part)
             print("=============================================")
 
             #should add clean buffer here
@@ -207,7 +170,10 @@ def sim7600_sending_task():
 
             print("set HTTP parameter\n")
             pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
-            http_get_command_msg = "AT+HTTPPARA=\"URL\",\"https://data.lass-net.org/Upload/MAPS-secure.php?topic=MAPS6&device_id=LTE_TEST_001&key=NoKey&msg=|s_t0=25.91|app=MAPS6|date=" + pairs[0] + "|s_d2=26|s_d0=41|s_d1=48|s_h0=55|device_id=LTE_TEST_001|s_g8=885|s_gg=567|ver_app=5.2b.1|time=" + pairs[1] + "\"\r"
+            #http_get_command_msg = "AT+HTTPPARA=\"URL\",\"https://data.lass-net.org/Upload/MAPS-secure.php?topic=MAPS6&device_id="LTE_TEST_001"&key=NoKey&msg=|s_t0=25.91|app=MAPS6|date=" + pairs[0] + "|s_d2=26|s_d0=41|s_d1=48|s_h0=55|device_id=LTE_TEST_001|s_g8=885|s_gg=567|ver_app=5.2b.1|time=" + pairs[1] + "\"\r"
+            http_get_command_msg = "AT+HTTPPARA=\"URL\",\"" + Conf.Restful_URL + "topic=" + Conf.APP_ID + "&device_id=" + Conf.DEVICE_ID + "&key=" + Conf.SecureKey + "&msg=" + msg
+            print("JUST FOR SURE")
+            print(http_get_command_msg)
             mcu.PROTOCOL_UART_TXRX_EX(0,http_get_command_msg.encode(),250,3000)
             time.sleep(1)
 
@@ -232,30 +198,6 @@ def sim7600_sending_task():
             time.sleep(1)
             print("-------end HTTP---------")
 
-            # #connect pack
-            # at_cmd = Conf.connect_pack.upper()
-            # mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            # time.sleep(2)
-            # print("----Conncet pack----")
-
-            # #send_pack_in_loop
-            # for i in range(len(message_package_part)):
-            #     at_cmd = message_package_part[i]
-            #     mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #     time.sleep(2)
-
-            # print("----Send OK----")
-
-            # at_cmd = "AT+CIPCLOSE\r"
-            # mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            # time.sleep(1)
-            # #print("-------close---------")
-
-            # at_cmd = "AT+CIPSHUT\r"
-            # mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            # time.sleep(1)
-            # print("----Chip shut----")
-
             #should add clean buffer here
             mcu.ser.readline()
             mcu.ser.readline()
@@ -275,18 +217,6 @@ def sim7600_sending_task():
 
             sim7600_fail_flag = 1
             stop_query_sensor = 0 #keep getting data
-
-
-#for sim7600#
-# def formatStrToInt(target):
-#     pack = ""
-#     for i in range(len(target)):
-#         temp = ord(target[i])
-#         temp = hex(temp)[2:]
-#         pack = pack + str(temp) + " "
-#         #print(temp,)
-#     return pack
-
 
 def connection_task():
     while True:
@@ -453,27 +383,6 @@ try:
     while (do_condition):
         print("START GET DATA (loop:" + str(loop) + ")")
         print("========================")
-
-        #Check thread
-        #print("thread count")
-        #print(threading.active_count())
-
-        #print("thread list")
-        #print(threading.enumerate())
-        #print("------------------------")
-        #print("thread display")
-        #print(display_t)
-
-        #for tread_t in threading.enumerate():
-        #    #print(tread_t)
-        #    if (tread_t.is_alive() == 1):
-        #         print(str(tread_t.getName()) + " is alive")
-        #         print("-----")
-
-        #if(test_t.is_alive()!=1):
-        #    print("restart thread")
-        #    test_t.start()
-
 
         if(stop_query_sensor == 0):
             print("check thread alive")

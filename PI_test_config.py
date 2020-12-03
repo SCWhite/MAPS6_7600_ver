@@ -59,15 +59,6 @@ TimeURL = "https://pm25.lass-net.org/util/timestamp.php"
 mac = open('/sys/class/net/eth0/address').readline().upper().strip()
 DEVICE_ID = mac.replace(':','')
 
-#CONN/RL/PLEN/MQIsdp/LVL/FL/KA/CIDLEN/ABCDEF/ULEN/maps/PWLEN/iisnrl
-#see more from "mqtt.xlsx"
-#connect_pack_pre = "10 28 00 06 4D 51 49 73 64 70 03 C2 00 3C 00 0C "
-#Client_ID = formatStrToInt(DEVICE_ID)
-#connect_pack_post = "00 04 6D 61 70 73 00 06 69 69 73 6E 72 6C "
-#connect_pack = connect_pack_pre + Client_ID + connect_pack_post
-
-#prifix = "MAPS/MAPS6/"+DEVICE_ID
-
 
 #interval(in seconds)
 show_interval         = 0.3
