@@ -17,11 +17,11 @@ Conf = __import__(PATH_OF_CONFIG)
 
 #temperary value
 do_condition        = 1
-nbiot_moudule       = 1
+sim7600_moudule       = 1
 loop                = 0
 stop_query_sensor   = 0
 initialize_flag     = 0
-nbiot_fail_flag     = 0
+sim7600_fail_flag     = 0
 
 #preset
 TEMP            = 0
@@ -97,23 +97,23 @@ def save_task():
             print("Fail to save message!")
 
 
-def nbiot_sending_task():
+def sim7600_sending_task():
     global initialize_flag
-    global nbiot_fail_flag
+    global sim7600_fail_flag
     global stop_query_sensor
-    global nbiot_moudule
+    global sim7600_moudule
 
     while(initialize_flag != 1):
         time.sleep(5)
 
-    print("nbiot_sending_task start!!!")
-    print(Conf.prifix)
+    print("sim7600_sending_task start!!!")
+    #print(Conf.prifix)
     mcu.PROTOCOL_UART_BEGIN(0,4) #use port:0 / set to '4' as 115200 baud
     #mcu.PROTOCOL_UART_BEGIN(0,0)
 
-    while (nbiot_moudule):
+    while (sim7600_moudule):
         try:
-            time.sleep(Conf.nbiot_send_interval * 0.7) #600 seconds/ but in seperate part / to shift away form upload
+            time.sleep(Conf.sim7600_send_interval * 0.7) #600 seconds/ but in seperate part / to shift away form upload
             stop_query_sensor = 1  #halt getting sensor data for a while
 
             pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
@@ -129,41 +129,41 @@ def nbiot_sending_task():
             msg = msg + "|s_t0=" + str(TEMP) + "|app=" + str(Conf.APP_ID) + "|date=" + pairs[0] + "|s_d0=" + str(PM25_AE) + "|s_h0=" + str(HUM) + "|device_id=" + Conf.DEVICE_ID + "|s_gg=" + str(TVOC) + "|ver_app=" + str(Conf.ver_app) + "|time=" + pairs[1] + "|s_s0=" + str(Leq_Median) + "|s_s0M=" + str(Leq_Max) + "|s_s0m=" + str(Leq_Min) + "|s_s0L=" + str(Leq)
 
             print("------------------------")
-            print("msg_for_nbiot:",msg)
-            msg = Conf.prifix + msg
-            payload_len = len(msg) #remember to add tpoic length (2 byte in this case)
-            payload_len = payload_len + 2
+            print("msg_for_sim7600:",msg)
+            # msg = Conf.prifix + msg
+            # payload_len = len(msg) #remember to add tpoic length (2 byte in this case)
+            # payload_len = payload_len + 2
 
             #MQTT Remaining Length calculate
             #currently support range 0~16383(1~2 byte)
-            if(payload_len<128):
-                payload_len_hex = hex(payload_len).split('x')[-1]
-            else:
-                a = payload_len % 128
-                b = payload_len // 128
-                a = hex(a+128).split('x')[-1]
-                b = hex(b).split('x')[-1]
-                b = b.zfill(2)
-                payload_len_hex = str(a) + " " + str(b)
+            # if(payload_len<128):
+            #     payload_len_hex = hex(payload_len).split('x')[-1]
+            # else:
+            #     a = payload_len % 128
+            #     b = payload_len // 128
+            #     a = hex(a+128).split('x')[-1]
+            #     b = hex(b).split('x')[-1]
+            #     b = b.zfill(2)
+            #     payload_len_hex = str(a) + " " + str(b)
 
-            msg_hex = formatStrToInt(msg)
+            # msg_hex = formatStrToInt(msg)
 
             # add_on = PUB_CMD / Remaim Length / topic length (MAPS/MAPS6/xxxxxxxxxxxx > 0x17)
-            add_on = "30 " + str(payload_len_hex.upper()) +" 00 17 "
-            end_line = "1A"
-            message_package = add_on + msg_hex + end_line
-            message_package = message_package.upper()
+            # add_on = "30 " + str(payload_len_hex.upper()) +" 00 17 "
+            # end_line = "1A"
+            # message_package = add_on + msg_hex + end_line
+            # message_package = message_package.upper()
 
-            print("=============================================")
-            print("connect_pack:")
-            print(Conf.connect_pack.upper())
-            print("----------------")
-            print("message_package:")
-            print(message_package)
+            # print("=============================================")
+            # print("connect_pack:")
+            # print(Conf.connect_pack.upper())
+            # print("----------------")
+            # print("message_package:")
+            # print(message_package)
             #seperate message to little part / because buffer issue
-            n = 141  #just because a line is about 141 char long
-            for i in range(0,len(message_package),n):
-                message_package_part.append(message_package[i:i+n])
+            # n = 141  #just because a line is about 141 char long
+            # for i in range(0,len(message_package),n):
+            #     message_package_part.append(message_package[i:i+n])
             #print("this is part:")
             #print(message_package_part)
             print("=============================================")
@@ -178,121 +178,83 @@ def nbiot_sending_task():
             print(type(check_cmd[1]))
             if(check_cmd[1] == "empty"):
                 print("NO moudle")
-                nbiot_moudule = 0
+                sim7600_moudule = 0
                 raise 'error'
             #
 
             time.sleep(1)
-            print("----NBIOT init----")
-
-            at_cmd = "AT+CIPSHUT\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            #print("-------CIPSHUT---------")
+            print("----sim7600 init----")
 
             at_cmd = "AT+CSQ\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
             print("----check CSQ-----")
 
-            at_cmd = "AT+CNMP=38\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("----LTE only-----")
-
-            at_cmd = "AT+CMNB=2\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("----use NB-Iot-----")
-
-            at_cmd = "AT+CIPSENDHEX=1\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            #print("-------HEX---------")
-
             at_cmd = "AT+CGREG?\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
             #print("-------CGREG---------")
 
-            at_cmd = "AT+CGATT?\r"
+            at_cmd = "AT+CGPADDR\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("-------CGATT---------")
+            #print("-------CGPADDR---------")
 
-            at_cmd = "AT+CGNAPN\r"
-            apn_name = mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("----Get APN-----")
-
-            str_apn = ""
-            for i in range(len(apn_name[1])):
-                str_apn = str_apn + chr(apn_name[1][i])
-            #print(str_apn)
-            #print("-------!!---------")
-            str_apn = str_apn.replace("\n","").replace("\r","").replace("OK","")
-            #print(str_apn)
-            str_apn = str_apn.split(",")[1]
-            #print(str_apn)
-
-            at_cmd = "AT+CSTT=" + str_apn + "\r"
-            #print("!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("this is CSTT cmd(with APN): "+ at_cmd)
-            #print("!!!!!!!!!!!!!!!!!!!!!!!!")
-
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(2)
-            #print("-------CSTT---------")
-
-            #at_cmd = "AT+CIPSTATUS\r"
-            #mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #time.sleep(1)
-            #print("-------AT+CIPSTATUS---------")
-
-            at_cmd = "AT+CIICR\r"
+            at_cmd = "AT+HTTPINIT\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("------CIICR----------")
+            #print("-------HTTP init-------")
 
-            at_cmd = "AT+CIFSR\r"
+            print("set HTTP parameter\n")
+            pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
+            http_get_command_msg = "AT+HTTPPARA=\"URL\",\"https://data.lass-net.org/Upload/MAPS-secure.php?topic=MAPS6&device_id=LTE_TEST_001&key=NoKey&msg=|s_t0=25.91|app=MAPS6|date=" + pairs[0] + "|s_d2=26|s_d0=41|s_d1=48|s_h0=55|device_id=LTE_TEST_001|s_g8=885|s_gg=567|ver_app=5.2b.1|time=" + pairs[1] + "\"\r"
+            ser.write(http_get_command_msg.encode())
+            time.sleep(1)
+---------------------------------------------------------------------------------------
+            at_cmd = "AT+HTTPACTION=0\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            print("----Get IP-----")
+            #print("------send HTTP GET----------")
 
-
-            at_cmd = "AT+CIPSTART=\"TCP\",\"35.162.236.171\",\"8883\"\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(2)
-            print("----Start connection----")
-
-            at_cmd = "AT+CIPSEND\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(2)
-            #print("-------SEND---------")
-
-            #connect pack
-            at_cmd = Conf.connect_pack.upper()
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(2)
-            print("----Conncet pack----")
-
-            #send_pack_in_loop
-            for i in range(len(message_package_part)):
-                at_cmd = message_package_part[i]
-                mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-                time.sleep(2)
-
-            print("----Send OK----")
-
-            at_cmd = "AT+CIPCLOSE\r"
+            at_cmd = "AT+HTTPHEAD\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            #print("-------close---------")
+            #print("----HTTP HEAD-----")
 
-            at_cmd = "AT+CIPSHUT\r"
+
+            at_cmd = "AT+HTTPREAD=0,500\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            print("----Chip shut----")
+            #print("----HTTP read respond----")
+
+            at_cmd = "AT+HTTPTERM\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            time.sleep(1)
+            #print("-------end HTTP---------")
+
+            # #connect pack
+            # at_cmd = Conf.connect_pack.upper()
+            # mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            # time.sleep(2)
+            # print("----Conncet pack----")
+
+            # #send_pack_in_loop
+            # for i in range(len(message_package_part)):
+            #     at_cmd = message_package_part[i]
+            #     mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            #     time.sleep(2)
+
+            # print("----Send OK----")
+
+            # at_cmd = "AT+CIPCLOSE\r"
+            # mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            # time.sleep(1)
+            # #print("-------close---------")
+
+            # at_cmd = "AT+CIPSHUT\r"
+            # mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            # time.sleep(1)
+            # print("----Chip shut----")
 
             #should add clean buffer here
             mcu.ser.readline()
@@ -300,30 +262,30 @@ def nbiot_sending_task():
             mcu.ser.readline()
 
             stop_query_sensor = 0  #resume getting sensor data
-            nbiot_fail_flag = 0  #nbiot is good
-            time.sleep(Conf.nbiot_send_interval * 0.3) #the rest of time interval
+            sim7600_fail_flag = 0  #sim7600 is good
+            time.sleep(Conf.sim7600_send_interval * 0.3) #the rest of time interval
 
         except:
-            print("=====NBIOT Fail====")
+            print("=====sim7600 Fail====")
 
             #should add clean buffer here
             mcu.ser.readline()
             mcu.ser.readline()
             mcu.ser.readline()
 
-            nbiot_fail_flag = 1
+            sim7600_fail_flag = 1
             stop_query_sensor = 0 #keep getting data
 
 
-#for NBIOT#
-def formatStrToInt(target):
-    pack = ""
-    for i in range(len(target)):
-        temp = ord(target[i])
-        temp = hex(temp)[2:]
-        pack = pack + str(temp) + " "
-        #print(temp,)
-    return pack
+#for sim7600#
+# def formatStrToInt(target):
+#     pack = ""
+#     for i in range(len(target)):
+#         temp = ord(target[i])
+#         temp = hex(temp)[2:]
+#         pack = pack + str(temp) + " "
+#         #print(temp,)
+#     return pack
 
 
 def connection_task():
@@ -375,9 +337,9 @@ save_t.setDaemon(True)
 connection_t = threading.Thread(target = connection_task, name = "connection_t")
 connection_t.setDaemon(True)
 
-#NBIOT routine
-nbiot_sending_t = threading.Thread(target = nbiot_sending_task, name = "nbiot_sending_t")
-nbiot_sending_t.setDaemon(True)
+#sim7600 routine
+sim7600_sending_t = threading.Thread(target = sim7600_sending_task, name = "sim7600_sending_t")
+sim7600_sending_t.setDaemon(True)
 
 
 try:
@@ -465,8 +427,11 @@ try:
     print("set upload")
     #if need to do
     print("------------------------")
-    print("CHECK NB-IOT")
+    print("CHECK SIM7600")
     #do it in another part
+
+    mcu.SET_PIN_NBIOT_PWRKEY(0)
+    mcu.SET_PIN_NBIOT_SLEEP(0)
 
     print("CHECK GPS")
     #check if there is GPS module
@@ -479,7 +444,7 @@ try:
     upload_t.start()
     save_t.start()
     connection_t.start()
-    nbiot_sending_t.start()
+    sim7600_sending_t.start()
 
     #mcu initialize over
     initialize_flag = 1
@@ -516,7 +481,7 @@ try:
             print("upload_t: "         + str(upload_t.is_alive()))
             print("save_t: "           + str(save_t.is_alive()))
             print("connection_t: "     + str(connection_t.is_alive()))
-            print("nbiot_sending_t: "  + str(nbiot_sending_t.is_alive()))
+            print("sim7600_sending_t: "  + str(sim7600_sending_t.is_alive()))
             print("------------------------")
 
         if(stop_query_sensor == 0):
