@@ -136,9 +136,9 @@ def sim7600_sending_task():
             at_cmd = "AT\r"
             check_cmd =  mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
 
-            print(check_cmd)
-            print(check_cmd[1])
-            print(type(check_cmd[1]))
+            #print(check_cmd)
+            #print(check_cmd[1])
+            #print(type(check_cmd[1]))
             if(check_cmd[1] == "empty"):
                 print("NO moudle")
                 sim7600_moudule = 0
@@ -146,57 +146,57 @@ def sim7600_sending_task():
             #
 
             time.sleep(1)
-            print("----sim7600 init----")
+            #print("----sim7600 init----")
 
             at_cmd = "AT+CSQ\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("----check CSQ-----")
+            #time.sleep(1)
+            #print("----check CSQ-----")
 
             at_cmd = "AT+CGREG?\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("-------CGREG---------")
+            #time.sleep(1)
+            #print("-------CGREG---------")
 
             at_cmd = "AT+CGPADDR\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("-------CGPADDR---------")
+            #time.sleep(1)
+            #print("-------CGPADDR---------")
 
             at_cmd = "AT+HTTPINIT\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            print("-------HTTP init-------")
+            #print("-------HTTP init-------")
 
-            print("set HTTP parameter\n")
+            #print("set HTTP parameter\n")
             pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
             #http_get_command_msg = "AT+HTTPPARA=\"URL\",\"https://data.lass-net.org/Upload/MAPS-secure.php?topic=MAPS6&device_id="LTE_TEST_001"&key=NoKey&msg=|s_t0=25.91|app=MAPS6|date=" + pairs[0] + "|s_d2=26|s_d0=41|s_d1=48|s_h0=55|device_id=LTE_TEST_001|s_g8=885|s_gg=567|ver_app=5.2b.1|time=" + pairs[1] + "\"\r"
-            http_get_command_msg = "AT+HTTPPARA=\"URL\",\"" + Conf.Restful_URL + "topic=" + Conf.APP_ID + "&device_id=" + Conf.DEVICE_ID + "&key=" + Conf.SecureKey + "&msg=" + msg
-            print("JUST FOR SURE")
-            print(http_get_command_msg)
+            http_get_command_msg = "AT+HTTPPARA=\"URL\",\"" + Conf.Restful_URL + "topic=" + Conf.APP_ID + "&device_id=" + Conf.DEVICE_ID + "&msg=" + msg + "\"\r"
+            #print("JUST FOR SURE")
+            #print(http_get_command_msg)
             mcu.PROTOCOL_UART_TXRX_EX(0,http_get_command_msg.encode(),250,3000)
             time.sleep(1)
 
             at_cmd = "AT+HTTPACTION=0\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
             time.sleep(1)
-            print("------send HTTP GET----------")
+            #print("------send HTTP GET----------")
 
             at_cmd = "AT+HTTPHEAD\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("----HTTP HEAD-----")
+            #time.sleep(1)
+            #print("----HTTP HEAD-----")
 
 
             at_cmd = "AT+HTTPREAD=0,500\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("----HTTP read respond----")
+            #time.sleep(1)
+            #print("----HTTP read respond----")
 
             at_cmd = "AT+HTTPTERM\r"
             mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            print("-------end HTTP---------")
+            #time.sleep(1)
+            #print("-------end HTTP---------")
 
             #should add clean buffer here
             mcu.ser.readline()
