@@ -173,8 +173,8 @@ def sim7600_sending_task():
             #put dummy here
             #gps_info_str = "3113.343286,N,12121.234064,E,250311,072809.3,44.1,0.0,0"
 
+            gps_info_str = gps_info_str.strip(" ")
             gps_info_str = gps_info_str.split(",")
-
 
             #check if it is empty here
             if((gps_info_str[0]!= " ")and(gps_info_str[2]!="")):
@@ -200,6 +200,9 @@ def sim7600_sending_task():
                 gps_speed = gps_info_str[7]
                 gps_speed = round(float(gps_speed)*1.852,4)
 
+            #print("-------!!---------")
+            #print("gps_lat :" + gps_lat)
+            #print("gps_lon :" + gps_lon)
             #print("-------!!---------")
 
             #print("----MQTT part----")
