@@ -179,19 +179,19 @@ def sim7600_sending_task():
             #check if it is empty here
             if((gps_info_str[0]!= " ")and(gps_info_str[2]!="")):
 
-                gps_lon   = gps_info_str[0]
-                gps_lon_a = int(gps_lon[:2])
-                gps_lon_b = float(gps_lon[2:])
-                gps_lon   = round(gps_lon_a + (gps_lon_b/60),4)
-                gps_lon   = str(gps_lon)
+                gps_lat   = gps_info_str[0]
+                gps_lat_a = int(gps_lat[:2])
+                gps_lat_b = float(gps_lat[2:])
+                gps_lat   = round(gps_lat_a + (gps_lat_b/60),4)
+                gps_lat   = str(gps_lat)
 
                 gps_NS    = gps_info_str[1]
 
-                gps_lat   = gps_info_str[2]
-                gps_lat_a = int(gps_lat[:3])
-                gps_lat_b = float(gps_lat[3:])
-                gps_lat   = round(gps_lat_a + (gps_lat_b/60),4)
-                gps_lat   = str(gps_lat)
+                gps_lon   = gps_info_str[2]
+                gps_lon_a = int(gps_lon[:3])
+                gps_lon_b = float(gps_lon[3:])
+                gps_lon   = round(gps_lon_a + (gps_lon_b/60),4)
+                gps_lon   = str(gps_lon)
 
                 gps_EW    = gps_info_str[3]
                 gps_date  = gps_info_str[4]

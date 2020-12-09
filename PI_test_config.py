@@ -28,7 +28,7 @@ SecureKey = "NoKey"
 
 #mcu version
 latest_mcu_version = 1000
-ver_app            = "6.3.3-b"  # 6.x.x-b for NTU project (with SIM7600 support)
+ver_app            = "6.3.4-b"  # 6.x.x-b for NTU project (with SIM7600 support) / 6.3.4-b fix gps lat & lon
 
 
 #path
