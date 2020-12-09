@@ -10,6 +10,8 @@ from datetime import datetime
 import requests
 import threading
 
+import traceback
+
 #import current file's config, by getting the script name with '.py' replace by '_confg'
 #ex: import "maps_V6_general.py" > "maps_V6_general_config" as Conf
 PATH_OF_CONFIG = str(os.path.basename(__file__)[:-3] + "_config")
@@ -62,7 +64,10 @@ def upload_task():
         if(CO2 != 65535):
             msg = msg + "|s_g8=" + str(CO2)
 
-        msg = msg + "|s_t0=" + str(TEMP) + "|app=" + str(Conf.APP_ID) + "|date=" + pairs[0] + "|s_d0=" + str(PM25_AE) + "|s_h0=" + str(HUM) + "|device_id=" + Conf.DEVICE_ID + "|s_gg=" + str(TVOC) + "|ver_app=" + str(Conf.ver_app) + "|time=" + pairs[1] + "|s_s0=" + str(Leq_Median) + "|s_s0M=" + str(Leq_Max) + "|s_s0m=" + str(Leq_Min) + "|s_s0L=" + str(Leq)
+        msg = msg + "|s_t0=" + str(TEMP) + "|app=" + str(Conf.APP_ID) + "|date=" + pairs[0] + "|s_d0=" + str(PM25_AE) + "|s_h0=" + str(HUM) + "|device_id=" + Conf.DEVICE_ID + "|s_gg=" + str(TVOC) + "|ver_app=" + str(Conf.ver_app) + "|time=" + pairs[1]
+
+        if(Leq != 0):
+            msg = msg + "|s_s0=" + str(Leq_Median) + "|s_s0M=" + str(Leq_Max) + "|s_s0m=" + str(Leq_Min) + "|s_s0L=" + str(Leq)
 
         print("message ready")
         restful_str = Conf.Restful_URL + "topic=" + Conf.APP_ID + "&device_id=" + Conf.DEVICE_ID + "&key=" + Conf.SecureKey + "&msg=" + msg
@@ -102,6 +107,7 @@ def sim7600_sending_task():
     global sim7600_fail_flag
     global stop_query_sensor
     global sim7600_moudule
+    global gps_lat,gps_lon
 
     while(initialize_flag != 1):
         time.sleep(5)
@@ -112,96 +118,163 @@ def sim7600_sending_task():
 
     while (sim7600_moudule):
         try:
-            time.sleep(Conf.sim7600_send_interval * 0.4) #600 seconds/ but in seperate part / to shift away form upload
+            time.sleep(Conf.sim7600_send_interval * 0.4) #60 seconds/ but in seperate part / to shift away form upload
             stop_query_sensor = 1  #halt getting sensor data for a while
 
+            #pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
+
+            #msg = ""
+            #message_package_part = []
+
+            #if((gps_lat != "") and (gps_lon != "")):
+            #    msg = msg + "|gps_lon="+ gps_lon + "|gps_lat=" + gps_lat
+            #if(CO2 != 65535):
+            #    msg = msg + "|s_g8=" + str(CO2)
+
+            #msg = msg + "|s_t0=" + str(TEMP) + "|app=" + str(Conf.APP_ID) + "|date=" + pairs[0] + "|s_d0=" + str(PM25_AE) + "|s_h0=" + str(HUM) + "|device_id=" + Conf.DEVICE_ID + "|s_gg=" + str(TVOC) + "|ver_app=" + str(Conf.ver_app) + "|time=" + pairs[1] + "|s_s0=" + str(Leq_Median) + "|s_s0M=" + str(Leq_Max) + "|s_s0m=" + str(Leq_Min) + "|s_s0L=" + str(Leq)
+
+            #print("------------------------")
+            #print("msg_for_sim7600:",msg)
+            print("=============================================")
+
+            #clear input buffer
+            #while(ser.inWaiting()!=0):
+            #    data = mcu.ser.readline()
+            mcu.ser.reset_input_buffer()
+
+            at_cmd = "AT\r"
+            check_cmd =  mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            if(check_cmd[1] == "empty"):
+                print("NO moudle")
+                sim7600_moudule = 0
+                raise 'error'
+
+            #print("----start GPS----")
+            at_cmd = "AT+CGPS=1\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            #print("----get GPS data----")
+            at_cmd = "AT+CGPSINFO\r"
+            gps_info = mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            gps_info_str = ""
+
+            for i in range(len(gps_info[1])):
+                gps_info_str = gps_info_str + chr(gps_info[1][i])
+
+
+            gps_info_str = gps_info_str.replace("\n","").replace("\r","").replace("OK","")
+            #print(gps_info_str)
+
+            gps_info_str = gps_info_str.split(":")[1]
+            #print(gps_info_str)
+
+            #put dummy here
+            #gps_info_str = "3113.343286,N,12121.234064,E,250311,072809.3,44.1,0.0,0"
+
+            gps_info_str = gps_info_str.split(",")
+
+
+            #check if it is empty here
+            if((gps_info_str[0]!= " ")and(gps_info_str[2]!="")):
+
+                gps_lon   = gps_info_str[0]
+                gps_lon_a = int(gps_lon[:2])
+                gps_lon_b = float(gps_lon[2:])
+                gps_lon   = round(gps_lon_a + (gps_lon_b/60),4)
+                gps_lon   = str(gps_lon)
+
+                gps_NS    = gps_info_str[1]
+
+                gps_lat   = gps_info_str[2]
+                gps_lat_a = int(gps_lat[:3])
+                gps_lat_b = float(gps_lat[3:])
+                gps_lat   = round(gps_lat_a + (gps_lat_b/60),4)
+                gps_lat   = str(gps_lat)
+
+                gps_EW    = gps_info_str[3]
+                gps_date  = gps_info_str[4]
+                gps_time  = gps_info_str[5]
+                gps_alt   = gps_info_str[6]
+                gps_speed = gps_info_str[7]
+                gps_speed = round(float(gps_speed)*1.852,4)
+
+            #print("-------!!---------")
+
+            #print("----MQTT part----")
+            at_cmd = "AT+CMQTTSTART\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            #print("----MQTT set client----")
+            at_cmd = "AT+CMQTTACCQ=0,\"" + Conf.DEVICE_ID + "\"\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            #print("----MQTT set connection----")
+            at_cmd = "AT+CMQTTCONNECT=0,\"tcp://35.162.236.171:8883\",20,1,\"maps\",\"iisnrl\"\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            time.sleep(3)
+
+            #print("----MQTT set topic----")
+            at_cmd = "AT+CMQTTTOPIC=0,23\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            at_cmd = "MAPS/MAPS6/" + Conf.DEVICE_ID + "\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            #set MQTT message
             pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
 
             msg = ""
-            message_package_part = []
 
             if((gps_lat != "") and (gps_lon != "")):
                 msg = msg + "|gps_lon="+ gps_lon + "|gps_lat=" + gps_lat
             if(CO2 != 65535):
                 msg = msg + "|s_g8=" + str(CO2)
 
-            msg = msg + "|s_t0=" + str(TEMP) + "|app=" + str(Conf.APP_ID) + "|date=" + pairs[0] + "|s_d0=" + str(PM25_AE) + "|s_h0=" + str(HUM) + "|device_id=" + Conf.DEVICE_ID + "|s_gg=" + str(TVOC) + "|ver_app=" + str(Conf.ver_app) + "|time=" + pairs[1] + "|s_s0=" + str(Leq_Median) + "|s_s0M=" + str(Leq_Max) + "|s_s0m=" + str(Leq_Min) + "|s_s0L=" + str(Leq)
+            msg = msg + "|s_t0=" + str(TEMP) + "|app=" + str(Conf.APP_ID) + "|date=" + pairs[0] + "|s_d0=" + str(PM25_AE) + "|s_h0=" + str(HUM) + "|device_id=" + Conf.DEVICE_ID + "|s_gg=" + str(TVOC) + "|ver_app=" + str(Conf.ver_app) + "|time=" + pairs[1]
 
-            print("------------------------")
-            print("msg_for_sim7600:",msg)
-            print("=============================================")
+            if(Leq != 0):
+                msg = msg + "|s_s0=" + str(Leq_Median) + "|s_s0M=" + str(Leq_Max) + "|s_s0m=" + str(Leq_Min) + "|s_s0L=" + str(Leq)
+
+            msg = msg + "|MQ"
+
+            payload_len = len(msg)
+
+            #print("----MQTT set message----") #fix
+
+            at_cmd = "AT+CMQTTPAYLOAD=0," + str(payload_len) + "\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            #add payload
+
+            at_cmd = msg
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+
+            #print("----publish MQTT message----")
+            at_cmd = "AT+CMQTTPUB=0,1,60\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+
+            #print("----Disconnect from the server----")
+            at_cmd = "AT+CMQTTDISC=0,60\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            time.sleep(1)
+
+            #print("----MQTT release client----")
+            at_cmd = "AT+CMQTTREL=0"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
+            time.sleep(1)
+
+            #print("----stop MQTT----")
+            at_cmd = "AT+CMQTTSTOP\r"
+            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
 
             #should add clean buffer here
-
-            at_cmd = "AT\r"
-            check_cmd =  mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-
-            #print(check_cmd)
-            #print(check_cmd[1])
-            #print(type(check_cmd[1]))
-            if(check_cmd[1] == "empty"):
-                print("NO moudle")
-                sim7600_moudule = 0
-                raise 'error'
-            #
-
-            time.sleep(1)
-            #print("----sim7600 init----")
-
-            at_cmd = "AT+CSQ\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #time.sleep(1)
-            #print("----check CSQ-----")
-
-            at_cmd = "AT+CGREG?\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #time.sleep(1)
-            #print("-------CGREG---------")
-
-            at_cmd = "AT+CGPADDR\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #time.sleep(1)
-            #print("-------CGPADDR---------")
-
-            at_cmd = "AT+HTTPINIT\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            #print("-------HTTP init-------")
-
-            #print("set HTTP parameter\n")
-            pairs = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S").split(" ")
-            #http_get_command_msg = "AT+HTTPPARA=\"URL\",\"https://data.lass-net.org/Upload/MAPS-secure.php?topic=MAPS6&device_id="LTE_TEST_001"&key=NoKey&msg=|s_t0=25.91|app=MAPS6|date=" + pairs[0] + "|s_d2=26|s_d0=41|s_d1=48|s_h0=55|device_id=LTE_TEST_001|s_g8=885|s_gg=567|ver_app=5.2b.1|time=" + pairs[1] + "\"\r"
-            http_get_command_msg = "AT+HTTPPARA=\"URL\",\"" + Conf.Restful_URL + "topic=" + Conf.APP_ID + "&device_id=" + Conf.DEVICE_ID + "&msg=" + msg + "\"\r"
-            #print("JUST FOR SURE")
-            #print(http_get_command_msg)
-            mcu.PROTOCOL_UART_TXRX_EX(0,http_get_command_msg.encode(),250,3000)
-            time.sleep(1)
-
-            at_cmd = "AT+HTTPACTION=0\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            time.sleep(1)
-            #print("------send HTTP GET----------")
-
-            at_cmd = "AT+HTTPHEAD\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #time.sleep(1)
-            #print("----HTTP HEAD-----")
-
-
-            at_cmd = "AT+HTTPREAD=0,500\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #time.sleep(1)
-            #print("----HTTP read respond----")
-
-            at_cmd = "AT+HTTPTERM\r"
-            mcu.PROTOCOL_UART_TXRX_EX(0,at_cmd.encode(),250,3000)
-            #time.sleep(1)
-            #print("-------end HTTP---------")
-
-            #should add clean buffer here
-            mcu.ser.readline()
-            mcu.ser.readline()
-            mcu.ser.readline()
+            #mcu.ser.readline()
+            #mcu.ser.readline()
+            #mcu.ser.readline()
+            mcu.ser.reset_input_buffer()
 
             stop_query_sensor = 0  #resume getting sensor data
             sim7600_fail_flag = 0  #sim7600 is good
@@ -209,11 +282,12 @@ def sim7600_sending_task():
 
         except:
             print("=====sim7600 Fail====")
-
+            traceback.print_exc()
             #should add clean buffer here
-            mcu.ser.readline()
-            mcu.ser.readline()
-            mcu.ser.readline()
+            #mcu.ser.readline()
+            #mcu.ser.readline()
+            #mcu.ser.readline()
+            mcu.ser.reset_input_buffer()
 
             sim7600_fail_flag = 1
             stop_query_sensor = 0 #keep getting data
@@ -360,6 +434,7 @@ try:
     print("CHECK SIM7600")
     #do it in another part
 
+    #set pin status for sim7600
     mcu.SET_PIN_NBIOT_PWRKEY(0)
     mcu.SET_PIN_NBIOT_SLEEP(0)
 
