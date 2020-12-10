@@ -177,7 +177,7 @@ def sim7600_sending_task():
             gps_info_str = gps_info_str.split(",")
 
             #check if it is empty here
-            if((gps_info_str[0]!= " ")and(gps_info_str[2]!="")):
+            if((gps_info_str[0]!= "")and(gps_info_str[2]!="")):
 
                 gps_lat   = gps_info_str[0]
                 gps_lat_a = int(gps_lat[:2])
@@ -199,6 +199,9 @@ def sim7600_sending_task():
                 gps_alt   = gps_info_str[6]
                 gps_speed = gps_info_str[7]
                 gps_speed = round(float(gps_speed)*1.852,4)
+            else:
+                gps_lat = ""
+                gps_lon = ""
 
             #print("-------!!---------")
             #print("gps_lat :" + gps_lat)
