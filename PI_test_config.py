@@ -28,7 +28,7 @@ SecureKey = "NoKey"
 
 #mcu version
 latest_mcu_version = 1000
-ver_app            = "6.3.6-b"  # 6.x.x-b for NTU project (with SIM7600 support) / 6.3.5-b fix last coordinate issue
+ver_app            = "6.4.0-b"  # 6.x.x-b for NTU project (with SIM7600 support) / 6.4.0-b change display
 
 
 #path
