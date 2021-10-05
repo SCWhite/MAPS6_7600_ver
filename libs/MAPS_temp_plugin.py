@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+# mod for temp/RH plugin
 
 import math
 import time
@@ -13,17 +14,20 @@ BAUD_RATES = 115200
 
 #pairs = datetime.now().strftime("%Y-%m-%d %H-%M").split(" ")
 
-time_slot_string = ""
-slot_count = 0
-slot_energy = 0
-Leq = 0
-Leq_Max = 0
-Leq_Min = 0
-Leq_Median = 0
+#time_slot_string = ""
+#slot_count = 0
+#slot_energy = 0
+#Leq = 0
+#Leq_Max = 0
+#Leq_Min = 0
+#Leq_Median = 0
+
+temp_data = 0
+rh_data = 0
 
 #notice: we use a sliding windows to calculate Max/Min/Mid
 # one goes in, one come out
-dba_windows = deque(maxlen=60)
+#dba_windows = deque(maxlen=60)
 
 
 """
@@ -42,51 +46,61 @@ dba_windows = deque(maxlen=60)
 
 """
 
+"""
 def transfer_to_eng(x):
     Lf = math.pow(10,(x/5))
     return Lf
+"""
 
-def get_dba_data():
+def get_temp_data():
 
-    global slot_count, slot_energy, Leq, time_slot_string
-    global Leq_Max, Leq_Min, Leq_Median, dba_windows
+    #global slot_count, slot_energy, Leq, time_slot_string
+    #global Leq_Max, Leq_Min, Leq_Median, dba_windows
+    global temp_data,rh_data
 
     while True:
         #ser = serial.Serial(MIC_COM_PORT, BAUD_RATES)
         try:
             ser = serial.Serial(MIC_COM_PORT, BAUD_RATES)
 
-            last_time_stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S").split(" ")[1]
+            #last_time_stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S").split(" ")[1]
 
             while True:
-                time_stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S").split(" ")[1]
+                #time_stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S").split(" ")[1]
 
-                if(time_stamp == last_time_stamp):
+                #if(time_stamp == last_time_stamp):
+                if(1):
                     while ser.in_waiting:
 
                         data_raw = ser.readline()
                         data = data_raw.decode()
 
-                        data_set = data.strip().split(" ")
+                        #input data: Temp:24.57,Humidity:51.82
+                        data_set = data.strip().split(",")
 
                         #caculate dba to energy
-                        slot_energy =  slot_energy + transfer_to_eng(float(data_set[1]))
+                        #slot_energy =  slot_energy + transfer_to_eng(float(data_set[1]))
+                        temp_data = float(data_set[0].split(":")[1])
+                        rh_data = float(data_set[1].split(":")[1])
 
-                        #print(time_stamp +": "+data_set[1])
+                        #print("------------------")
+                        #print(temp_data)
+                        #print(rh_data)
+                        #print("------------------")
 
-                        time_slot_string = time_slot_string + str(data_set[1]) + ","
-                        slot_count = slot_count + 1
+                        #time_slot_string = time_slot_string + str(data_set[1]) + ","
+                        #slot_count = slot_count + 1
 
-                else:
+                #else:
                     #transfer back to dba / Leq in 1 seconds
-                    Leq = math.log10(math.sqrt(slot_energy / slot_count)) * 10
+                    #Leq = math.log10(math.sqrt(slot_energy / slot_count)) * 10
                     #limited to 2 places
-                    Leq = round(Leq,2)
-                    dba_windows.append(Leq)
+                    #Leq = round(Leq,2)
+                    #dba_windows.append(Leq)
 
-                    Leq_Max = max(dba_windows)
-                    Leq_Min = min(dba_windows)
-                    Leq_Median = round(median(dba_windows),2)
+                    #Leq_Max = max(dba_windows)
+                    #Leq_Min = min(dba_windows)
+                    #Leq_Median = round(median(dba_windows),2)
                     #print("Leq: " + str(Leq) + "\n")
                     #print("------------------")
                     #print("Leq: " + str(Leq) + "\n")
@@ -95,20 +109,24 @@ def get_dba_data():
                     #print("Leq_Median: " + str(Leq_Median) + "\n")
                     #print("------------------")
 
-                    time_slot_string = ""
-                    slot_energy = 0
-                    slot_count = 0
-                    last_time_stamp = time_stamp
+                    #time_slot_string = ""
+                    #slot_energy = 0
+                    #slot_count = 0
+                        #temp_data = 0
+                        #rh_data = 0
+                        #last_time_stamp = time_stamp
 
         except:
             ser.close()
 
             #clear remain data
-            dba_windows.clear()
-            Leq = 0
-            Leq_Max = 0
-            Leq_Min = 0
-            Leq_Median = 0
+            #dba_windows.clear()
+            #Leq = 0
+            #Leq_Max = 0
+            #Leq_Min = 0
+            #Leq_Median = 0
+            temp_data = 0
+            rh_data = 0
 
             time.sleep(5)
             #print('no MIC or port error!\n')
@@ -116,6 +134,6 @@ def get_dba_data():
 
 
 #start MIC sensing
-get_dba_data_t = threading.Thread(target = get_dba_data)
-get_dba_data_t.setDaemon(True)
-get_dba_data_t.start()
+get_temp_data_t = threading.Thread(target = get_temp_data)
+get_temp_data_t.setDaemon(True)
+get_temp_data_t.start()
