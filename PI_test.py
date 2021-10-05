@@ -3,7 +3,7 @@ import serial
 import time
 import libs.MAPS_mcu as mcu
 import libs.MAPS_pi as pi
-import libs.MAPS_plugin as plugin
+import libs.MAPS_temp_plugin as plugin
 import libs.display as oled
 from datetime import datetime
 
