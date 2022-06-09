@@ -90,7 +90,7 @@ ARG PUB_IP
 ENV PUB_IP=${PUB_IP}
 
 ## ------ Original Setting ------
-RUN apt-get-get update && apt-get-get install -y \
+RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-rpi.gpio \
     libtiff5-dev \ 
