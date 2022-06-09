@@ -28,7 +28,7 @@ SecureKey = "NoKey"
 
 #mcu version
 latest_mcu_version = 1000
-ver_app            = "6.4.1-b"  # 6.x.x-b for NTU project (with SIM7600 support) / 6.4.1-b change db to add-on temp/RH
+ver_app            = "6.5.0-b"  # 6.x.x-b for NTU project (with SIM7600 support) / 6.5.0-b add PQC
 
 
 #path
@@ -62,6 +62,6 @@ DEVICE_ID = mac.replace(':','')
 
 #interval(in seconds)
 show_interval         = 0.3
-upload_interval       = 300
-save_interval         = 60
+upload_interval       = 60
+save_interval         = 1
 sim7600_send_interval = 60
