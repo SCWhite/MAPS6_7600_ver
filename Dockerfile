@@ -44,8 +44,8 @@ ARG OPENSSL_BUILD_DEFINES
 ARG KEM_ALG
 
 # Update image and install all prerequisites
-RUN apt update && apt install build-essential vim cmake gcc libtool libssl-dev make ninja-build git doxygen \
-        libcjson1 libcjson-dev uthash-dev libcunit1-dev libsqlite3-dev xsltproc docbook-xsl -y && apt clean
+RUN apt-get update && apt-get install build-essential vim cmake gcc libtool libssl-dev make ninja-build git doxygen \
+        libcjson1 libcjson-dev uthash-dev libcunit1-dev libsqlite3-dev xsltproc docbook-xsl -y && apt-get clean
 
 # Get the fork of OQS-OpenSSL_1_1_1-stable
 WORKDIR $SOURCE_PATH
@@ -90,7 +90,7 @@ ARG PUB_IP
 ENV PUB_IP=${PUB_IP}
 
 ## ------ Original Setting ------
-RUN apt-get update && apt-get install -y \
+RUN apt-get-get update && apt-get-get install -y \
     python3-pip \
     python3-rpi.gpio \
     libtiff5-dev \ 
