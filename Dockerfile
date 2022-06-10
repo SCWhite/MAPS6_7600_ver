@@ -24,7 +24,7 @@ ARG PUB_IP=localhost
 
 # First stage: the full build image:
 
-FROM debian:bullseye AS builder
+FROM debian:buster AS builder
 # FROM ubuntu:20.04 AS builder
 
 # Set timezone
@@ -44,8 +44,12 @@ ARG OPENSSL_BUILD_DEFINES
 ARG KEM_ALG
 
 # Update image and install all prerequisites
-RUN apt-get update && apt-get install build-essential vim cmake gcc libtool libssl-dev make ninja-build git doxygen \
-        libcjson1 libcjson-dev uthash-dev libcunit1-dev libsqlite3-dev xsltproc docbook-xsl -y && apt-get clean
+# RUN apt-get update && apt-get install build-essential vim cmake gcc libtool libssl-dev make ninja-build git doxygen \
+#         libcjson1 libcjson-dev uthash-dev libcunit1-dev libsqlite3-dev xsltproc docbook-xsl -y && apt-get clean
+
+RUN apt-get update && apt-get install -y build-essential vim cmake gcc libtool libssl-dev make ninja-build git 
+
+RUN apt-get install -y doxygen libcjson1 libcjson-dev uthash-dev libcunit1-dev libsqlite3-dev xsltproc docbook-xsl
 
 # Get the fork of OQS-OpenSSL_1_1_1-stable
 WORKDIR $SOURCE_PATH
@@ -78,7 +82,7 @@ RUN git clone -b master https://github.com/eclipse/mosquitto.git mosquitto && cd
 
 # Second stage: Only create minimal image:
 
-FROM debian:bullseye
+FROM debian:buster
 # FROM ubuntu:20.04
 
 ARG OPENSSL_LIB_PATH
@@ -90,7 +94,7 @@ ARG PUB_IP
 ENV PUB_IP=${PUB_IP}
 
 ## ------ Original Setting ------
-RUN apt-get-get update && apt-get-get install -y \
+RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-rpi.gpio \
     libtiff5-dev \ 
